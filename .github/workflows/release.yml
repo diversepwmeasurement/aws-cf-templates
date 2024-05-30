@@ -1,29 +1,31 @@
-name: Release
-on:
-  push:
-    tags:
-    - v*
-permissions:
-  id-token: write
-  contents: read
 defaults:
   run:
     shell: bash
 jobs:
   release:
-    runs-on: ['hyperenv', 'medium']
+    runs-on: self-hosted
     steps:
-    - uses: actions/checkout@v4
-    - uses: aws-actions/configure-aws-credentials@v4
+    - continue-on-error: true
+      uses: actions/checkout@v4
+    - continue-on-error: true
+      uses: aws-actions/configure-aws-credentials@v4
       with:
-        role-to-assume: arn:aws:iam::820394158530:role/github-openid-connect
-        role-session-name: github-actions-aws-cf-templates
         aws-region: eu-west-1
-    - name: release
-      run: |
-        VERSION=${GITHUB_REF_NAME:1}
-        sed -i "s/__VERSION__/${VERSION}/g" ./*/*.yaml
-        aws s3 sync --delete --exact-timestamps --exclude ".git/*" --exclude ".github/*" --exclude "test/*" --exclude "docs/*" ./ "s3://widdix-aws-cf-templates-releases-eu-west-1/v${VERSION}/"
-        if [[ $VERSION =~ ^[0-9.]*$ ]]; then
-          aws s3 sync --delete --exact-timestamps --exclude ".git/*" --exclude ".github/*" --exclude "test/*" --exclude "docs/*" ./ s3://widdix-aws-cf-templates-releases-eu-west-1/stable/
-        fi
+        role-session-name: github-actions-aws-cf-templates
+        role-to-assume: arn:aws:iam::820394158530:role/github-openid-connect
+    - continue-on-error: true
+      name: release
+      run: "VERSION=${GITHUB_REF_NAME:1}\nsed -i \"s/__VERSION__/${VERSION}/g\" ./*/*.yaml\n\
+        aws s3 sync --delete --exact-timestamps --exclude \".git/*\" --exclude \"\
+        .github/*\" --exclude \"test/*\" --exclude \"docs/*\" ./ \"s3://widdix-aws-cf-templates-releases-eu-west-1/v${VERSION}/\"\
+        \nif [[ $VERSION =~ ^[0-9.]*$ ]]; then\n  aws s3 sync --delete --exact-timestamps\
+        \ --exclude \".git/*\" --exclude \".github/*\" --exclude \"test/*\" --exclude\
+        \ \"docs/*\" ./ s3://widdix-aws-cf-templates-releases-eu-west-1/stable/\n\
+        fi\n"
+name: Release
+on:
+  repository_dispatch:
+    types: trigger-ga___release.yml
+permissions:
+  contents: read
+  id-token: write

@@ -1,14 +1,3 @@
----
-name: Acceptenace Tests
-on:
-  workflow_dispatch: {}
-  push:
-    branches:
-    - master
-    paths:
-    - '.github/workflows/acceptance-tests.yml'
-    - '**.yaml'
-    - 'test/**'
 concurrency: acceptenace-tests-${{ github.ref }}
 defaults:
   run:
@@ -17,6 +6,10 @@ jobs:
   acceptance-test:
     uses: ./.github/workflows/acceptance-test-run.yml
     with:
-      tests: '*'
       deletion-policy: delete
       failure-policy: rollback
+      tests: '*'
+name: Acceptenace Tests
+on:
+  repository_dispatch:
+    types: trigger-ga___acceptance-tests.yml
